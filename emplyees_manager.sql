@@ -54,8 +54,17 @@ where salary >
 (
     select avg(salary)
     from employee
-    where   = e.department_id
+    where  department_id = e.department_id
 );
+
+
+select *
+from (
+    select e.*,
+           avg(salary) over(partition by department_id) as dept_avg
+    from employee e
+) t
+where salary > dept_avg;
 
 
 ---employees with same manager 
@@ -66,3 +75,15 @@ inner join employee e2
 on e1.manager_id=e2.manager_id
 and e1.employee_id <>e2.employee_id
 ;
+
+--salary increase every month   
+select employee_id
+from (
+    select employee_id,
+           salary,
+           lag(salary) over(partition by employee_id order by month) prev_salary
+    from employee_salary
+) t
+where prev_salary is not null
+group by employee_id
+having count(*) = count(case when salary > prev_salary then 1 end);
